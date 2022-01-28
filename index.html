@@ -1,13 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+        integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
 </head>
+
 <body>
-    <h1>Welcome</h1>
-    <a href="/esd_sem_6/content.html">Go to content</a>
+    <div class="container-fluid">
+        <h1>All Bills</h1>
+        <div class="row">
+            <div class="col-8">
+                <button onclick="fetchBills()" class="btn btn-primary">
+                    <span id="fetch-button">Fetch Bills</span>
+                </button>
+                <table class="table mt-5">
+                    <thead>
+                        <tr class="bg-primary">
+                            <th scope="col">Sr. No</th>
+                            <th scope="col">Meter Number</th>
+                            <th scope="col">Billing Unit</th>
+                            <th scope="col">Amount</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-bills">
+        
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-4">
+                <form class="mt-5" style="background-color: #d3e9ff;border-radius: 9%;padding: 50px;">
+                    <div class="form-group row">
+                        <label for="staticEmail" class="col-sm-2 col-form-label">Meter Number</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="meterNumber">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="staticEmail" class="col-sm-2 col-form-label">Billing Unit</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="billingUnit">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="staticEmail" class="col-sm-2 col-form-label">Status</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="status">
+                        </div>
+                    </div>
+        
+                    <button type="button" class="btn btn-success" onclick="insertBill()">
+                        <span id="insert-button">Submit</span>
+                    </button>
+        
+                </form>
+            </div>
+        </div>
+
+        
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+        integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+        integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+        crossorigin="anonymous"></script>
 </body>
+<script>
+    const fetchBills = async (load = true) => {
+        if(load)
+        document.getElementById('fetch-button').innerHTML = `<div class="spinner-border text-light" role="status">
+                                                                <span class="sr-only">Loading...</span>
+                                                                </div>`;
+
+
+        var res = await fetch("https://esd-sem-6-e-bill.herokuapp.com/api/check-bill", {
+            method: "POST"
+        });
+        data = await res.json()
+        console.log(data);
+
+        var htmlString = ""
+        var i = 0
+        data["records"].forEach(rec => {
+            i += 1
+            htmlString += `
+              <tr>
+                <th scope="row">${i}</th>
+                <td>${rec['meterNumber']}</td>
+                <td>${rec['billingUnit']}</td>
+                <td>${rec['amount']}</td>
+                <td>${rec['status']}</td>
+                <td><button class="btn btn-danger" onclick="deleteBill('${rec['meterNumber']}')">Delete</button></td>
+                </tr>
+                `
+        });
+        var billBody = document.getElementById("all-bills")
+        billBody.innerHTML = htmlString
+
+        if(load)
+        document.getElementById('fetch-button').innerHTML = `Fetch Bill`;
+    }
+
+
+    const insertBill = async () => {
+
+        document.getElementById('insert-button').innerHTML = `<div class="spinner-border text-primary" role="status">
+                                                                <span class="sr-only">Loading...</span>
+                                                                </div>`;
+
+        var meterNumber = document.getElementById('meterNumber').value;
+        var billingUnit = document.getElementById('billingUnit').value;
+        var status = document.getElementById('status').value;
+        var data = {
+            "meterNumber": meterNumber,
+            "billingUnit": billingUnit,
+            "status": status
+        }
+        console.log(data);
+        console.log(JSON.stringify(data));
+        var res = await fetch("https://esd-sem-6-e-bill.herokuapp.com/api/insert-bill", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        var response = await res.json()
+        console.log(response);
+
+        document.getElementById('insert-button').innerHTML = `Submit`;
+        var meterNumber = document.getElementById('meterNumber').value = ""
+        var billingUnit = document.getElementById('billingUnit').value = ""
+        var status = document.getElementById('status').value = ""
+        
+        await fetchBills(false)
+    }
+
+    const deleteBill = async(meterNumber) => {
+        console.log(meterNumber);
+        var url = `https://esd-sem-6-e-bill.herokuapp.com/api/delete-bill/${meterNumber}`
+        var res = await fetch(url, {
+            method:"DELETE"
+        })
+        var response = await res.json()
+        console.log(response);
+        await fetchBills(false)
+    }
+</script>
+
 </html>
